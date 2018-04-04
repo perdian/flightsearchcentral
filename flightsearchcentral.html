@@ -1,0 +1,173 @@
+<html>
+    <head>
+
+        <title>Flight search central</title>
+        <link rel="stylesheet" type="text/css" class="ui" href="https://semantic-ui.com//dist/semantic.min.css">
+
+        <style type="text/css">
+            body { padding: 2rem 0 2rem 0; }
+            .flights .row { margin: 1rem 0 0 0; border-top: 1px dashed #888888; }
+            .flights .row .field { padding: 0.25rem 0 0.25rem 0; }
+            .actions { margin: 1rem 0 0 0; padding: 2rem 0 0 0; border-top: 1px dashed #888888; }
+        </style>
+
+        <script type="text/javascript" src="https://semantic-ui.com/dist/semantic.min.js"></script>
+        <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+        <script type="text/javascript" src="https://momentjs.com/downloads/moment.min.js"></script>
+
+        <script type="text/javascript">
+            let flightsearcherWebsiteProviders = {};
+        </script>
+
+        <script type="text/javascript" src="js/kayak.eu.js"></script>
+        <script type="text/javascript" src="js/momondo.de.js"></script>
+        <script type="text/javascript" src="js/skyscanner.de.js"></script>
+        <script type="text/javascript" src="js/klm.de.js"></script>
+
+    </head>
+    <body>
+
+        <div class="ui container">
+
+            <header class="ui header">
+                <i class="plane icon"></i>
+                <div class="content">
+                    Search flights
+                    <div class="sub header">Enter query</div>
+                </div>
+            </header>
+
+            <div class="flights ui grid form">
+                <div class="row footer">
+                    <div class="four wide column">
+                       <button class="ui labeled icon button" onclick="addFlightRow()"><i class="plus square icon"></i>Add flight</button>
+                    </div>
+                    <div class="six wide column">
+                        <div class="field">
+                            <label>Search metasearcher sites</label>
+                            <div><div class="ui checkbox"><input id="site-kayak" type="checkbox" /><label>Kayak.eu</label></div></div>
+                            <div><div class="ui checkbox"><input id="site-momondo" type="checkbox" /><label>Momondo.de</label></div></div>
+                            <div><div class="ui checkbox"><input id="site-skyscanner" type="checkbox" /><label>Skyscanner.de</label></div></div>
+                        </div>
+                    </div>
+                    <div class="six wide column">
+                        <div class="field">
+                            <label>Search airline sites</label>
+                            <div class="ui checkbox">
+                                <input id="site-klm" type="checkbox" />
+                                <label>KLM.de</label>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="actions ui grid">
+                <div class="row">
+                    <button id="openWebsitesButton" class="ui primary button">Open websites</button>
+                </div>
+            </div>
+
+        </div>
+
+        <script type="text/javascript">
+
+            let index = 0;
+
+            function closeRow(rowId) {
+                $("#" + rowId).remove();
+            }
+
+            function addFlightRow() {
+
+                let rowId = "row" + index++;
+                return $("<div class='row flight'></div>").attr("id", rowId).append(
+                    $("<div class='one wide column'></div>").append(
+                        $("<div class='field'></div>").append(
+                            $("<label>&nbsp;</label>"),
+                            $("<button class='ui icon button'><i class='window close icon'></i></button>").click(function() { closeRow(rowId); })
+                        )
+                    ),
+                    $("<div class='three wide column'></div>").append(
+                        $("<div class='field'></div>").append(
+                            $("<label>Departure airport</label>"),
+                            $("<input></input>").attr("class", "departureAirport").attr("placeholder", "XXX").attr("type", "text")
+                        )
+                    ),
+                    $("<div class='three wide column'></div>").append(
+                        $("<div class='field'></div>").append(
+                            $("<label>Arrival airport</label>"),
+                            $("<input></input>").attr("class", "arrivalAirport").attr("placeholder", "XXX").attr("type", "text")
+                        )
+                    ),
+                    $("<div class='three wide column'></div>").append(
+                        $("<div class='field'></div>").append(
+                            $("<label>Date</label>"),
+                            $("<input></input>").attr("class", "date").attr("type", "date")
+                        )
+                    ),
+                    $("<div class='three wide column'></div>").append(
+                        $("<div class='field'></div>").append(
+                            $("<label>Max transfers</label>"),
+                            $("<input></input>").attr("class", "maxTransfers").attr("type", "number")
+                        )
+                    ),
+                    $("<div class='three wide column'></div>").append(
+                        $("<div class='field'></div>").append(
+                            $("<label>Max transfer duration</label>"),
+                            $("<input></input>").attr("class", "maxTransferDuration").attr("type", "time")
+                        )
+                    ),
+                    $("<div class='one wide column'>&nbsp;</div>"),
+                    $("<div class='three wide column'></div>").append(
+                        $("<div class='field'></div>").append(
+                            $("<label>Depature min time</label>"),
+                            $("<input></input>").attr("class", "departureMinTime").attr("type", "time")
+                        )
+                    ),
+                    $("<div class='three wide column'></div>").append(
+                        $("<div class='field'></div>").append(
+                            $("<label>Depature max time</label>"),
+                            $("<input></input>").attr("class", "departureMaxTime").attr("type", "time")
+                        )
+                    ),
+                    $("<div class='three wide column'></div>").append(
+                        $("<div class='field'></div>").append(
+                            $("<label>Arrival min time</label>"),
+                            $("<input></input>").attr("class", "arrivalMinTime").attr("type", "time")
+                        )
+                    ),
+                    $("<div class='three wide column'></div>").append(
+                        $("<div class='field'></div>").append(
+                            $("<label>Arrival max time</label>"),
+                            $("<input></input>").attr("class", "arrivalMaxTime").attr("type", "time")
+                        )
+                    ),
+                    $("<div class='three wide column'></div>").append(
+                        $("<div class='field'></div>").append(
+                            $("<label>Max total duration</label>"),
+                            $("<input></input>").attr("class", "maxTotalDuration").attr("type", "time")
+                        )
+                    )
+                ).insertBefore($(".row.footer"));
+
+            }
+
+            function openWebsites() {
+                for (flightsearchWebsiteProvider in flightsearcherWebsiteProviders) {
+                    if ($("#site-" + flightsearchWebsiteProvider).prop("checked")) {
+                        flightsearcherWebsiteProviders[flightsearchWebsiteProvider].openWebsite();
+                    }
+                }
+            }
+
+            $("#addRowButton").click(addFlightRow);
+            $("#openWebsitesButton").click(openWebsites);
+
+            addFlightRow();
+
+        </script>
+
+    </body>
+</html>
