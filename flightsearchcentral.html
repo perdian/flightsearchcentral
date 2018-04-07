@@ -6,8 +6,8 @@
 
         <style type="text/css">
             body { padding: 2rem 0 2rem 0; }
-            .flights .row { margin: 1rem 0 0 0; border-top: 1px dashed #888888; }
-            .flights .row .field { padding: 0.25rem 0 0.25rem 0; }
+            .query .row { margin: 1rem 0 0 0; border-top: 1px dashed #888888; }
+            .query .row .field { padding: 0.25rem 0 0.25rem 0; }
             .actions { margin: 1rem 0 0 0; padding: 2rem 0 0 0; border-top: 1px dashed #888888; }
         </style>
 
@@ -37,36 +37,7 @@
                 </div>
             </header>
 
-            <div class="flights ui grid form">
-                <div class="row footer">
-                    <div class="four wide column">
-                       <button class="ui labeled icon button" onclick="addFlightRow()"><i class="plus square icon"></i>Add flight</button>
-                    </div>
-                    <div class="two wide column">
-                        <div class="field">
-                            <label>Passengers</label>
-                            <input class="numberOfPassengers" type="number" value="1" />
-                        </div>
-                    </div>
-                    <div class="four wide column">&nbsp;</div>
-                    <div class="three wide column">
-                        <div class="field">
-                            <label>Search metasearcher sites</label>
-                            <div><div class="ui checkbox"><input id="site-kayak" type="checkbox" /><label>Kayak.eu</label></div></div>
-                            <div><div class="ui checkbox"><input id="site-momondo" type="checkbox" /><label>Momondo.de</label></div></div>
-                            <div><div class="ui checkbox"><input id="site-skyscanner" type="checkbox" /><label>Skyscanner.de</label></div></div>
-                        </div>
-                    </div>
-                    <div class="three wide column">
-                        <div class="field">
-                            <label>Search airline sites</label>
-                            <div class="ui checkbox">
-                                <input id="site-klm" type="checkbox" />
-                                <label>KLM.de</label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="query ui grid form">
             </div>
 
             <div class="actions ui grid">
@@ -80,15 +51,54 @@
         <script type="text/javascript">
 
             let index = 0;
+            let flightSearchModel = null;
+
+            function recomputeModel() {
+
+                flightSearchModel = {
+                    flights: new Array(),
+                    activePages: new Array()
+                };
+
+                let flightSearchModelProperties = $(".flightSearchModel");
+                for (let i=0; i < flightSearchModelProperties.length; i++) {
+                    let flightSearchModelPropertyElement = $(flightSearchModelProperties[i]);
+                    if (flightSearchModelPropertyElement.val().length > 0) {
+                        flightSearchModel[flightSearchModelPropertyElement.attr("data-property-name")] = flightSearchModelPropertyElement.val();
+                    }
+                }
+                let flightRows = $(".flight");
+                for (let i=0; i < flightRows.length; i++) {
+                    let flightRow = $(flightRows[i]);
+                    let flightModel = {};
+                    let inputFields = flightRow.find(".flightModel");
+                    for (let j=0; j < inputFields.length; j++) {
+                        let inputField = $(inputFields[j]);
+                        flightModel[inputField.attr('data-property-name')] = inputField.val();
+                    }
+                    flightSearchModel.flights.push(flightModel);
+                }
+                let pageCheckboxes = $(".activePageModel");
+                for (let i=0; i < pageCheckboxes.length; i++) {
+                    let pageCheckbox = $(pageCheckboxes[i]);
+                    if (pageCheckbox.prop("checked")) {
+                        flightSearchModel.activePages.push(pageCheckbox.attr("data-page-name"));
+                    }
+                }
+
+                localStorage.setItem("flightSearchModel", JSON.stringify(flightSearchModel));
+
+            }
 
             function closeRow(rowId) {
                 $("#" + rowId).remove();
+                recomputeModel();
             }
 
-            function addFlightRow() {
+            function addFlightRow(flightModel) {
 
                 let rowId = "row" + index++;
-                return $("<div class='row flight'></div>").attr("id", rowId).append(
+                $("<div class='row flight'></div>").attr("id", rowId).append(
                     $("<div class='one wide column'></div>").append(
                         $("<div class='field'></div>").append(
                             $("<label>&nbsp;</label>"),
@@ -98,80 +108,188 @@
                     $("<div class='three wide column'></div>").append(
                         $("<div class='field'></div>").append(
                             $("<label>Departure airport</label>"),
-                            $("<input></input>").attr("class", "departureAirport").attr("placeholder", "XXX").attr("type", "text")
+                            $("<input class='flightModel'></input>")
+                                .attr("data-property-name", "departureAirport")
+                                .attr("placeholder", "XXX")
+                                .attr("type", "text")
+                                .attr("value", flightModel == null ? "" : flightModel.departureAirport)
+                                .change(recomputeModel)
                         )
                     ),
                     $("<div class='three wide column'></div>").append(
                         $("<div class='field'></div>").append(
                             $("<label>Arrival airport</label>"),
-                            $("<input></input>").attr("class", "arrivalAirport").attr("placeholder", "XXX").attr("type", "text")
+                            $("<input class='flightModel'></input>")
+                                .attr("data-property-name", "arrivalAirport")
+                                .attr("placeholder", "XXX")
+                                .attr("type", "text")
+                                .attr("value", flightModel == null ? "" : flightModel.arrivalAirport)
+                                .change(recomputeModel)
                         )
                     ),
                     $("<div class='three wide column'></div>").append(
                         $("<div class='field'></div>").append(
                             $("<label>Date</label>"),
-                            $("<input></input>").attr("class", "date").attr("type", "date")
+                            $("<input class='flightModel'></input>")
+                                .attr("data-property-name", "date")
+                                .attr("type", "date")
+                                .change(recomputeModel)
+                                .attr("value", flightModel == null ? "" : flightModel.date)
                         )
                     ),
-                    $("<div class='three wide column'></div>").append(
-                        $("<div class='field'></div>").append(
-                            $("<label>Max transfers</label>"),
-                            $("<input></input>").attr("class", "maxTransfers").attr("type", "number")
-                        )
-                    ),
-                    $("<div class='three wide column'></div>").append(
-                        $("<div class='field'></div>").append(
-                            $("<label>Max transfer duration</label>"),
-                            $("<input></input>").attr("class", "maxTransferDuration").attr("type", "time")
-                        )
-                    ),
+                    $("<div class='six wide column'>&nbsp;</div>"),
                     $("<div class='one wide column'>&nbsp;</div>"),
                     $("<div class='three wide column'></div>").append(
                         $("<div class='field'></div>").append(
                             $("<label>Depature min time</label>"),
-                            $("<input></input>").attr("class", "departureMinTime").attr("type", "time")
+                            $("<input class='flightModel'></input>")
+                                .attr("data-property-name", "departureMinTime")
+                                .attr("type", "time")
+                                .attr("value", flightModel == null ? "" : flightModel.departureMinTime)
+                                .change(recomputeModel)
                         )
                     ),
                     $("<div class='three wide column'></div>").append(
                         $("<div class='field'></div>").append(
                             $("<label>Depature max time</label>"),
-                            $("<input></input>").attr("class", "departureMaxTime").attr("type", "time")
+                            $("<input class='flightModel'></input>")
+                                .attr("data-property-name", "departureMaxTime")
+                                .attr("type", "time")
+                                .attr("value", flightModel == null ? "" : flightModel.departureMaxTime)
+                                .change(recomputeModel)
                         )
                     ),
                     $("<div class='three wide column'></div>").append(
                         $("<div class='field'></div>").append(
                             $("<label>Arrival min time</label>"),
-                            $("<input></input>").attr("class", "arrivalMinTime").attr("type", "time")
+                            $("<input class='flightModel'></input>")
+                                .attr("data-property-name", "arrivalMinTime")
+                                .attr("type", "time")
+                                .attr("value", flightModel == null ? "" : flightModel.arrivalMinTime)
+                                .change(recomputeModel)
                         )
                     ),
                     $("<div class='three wide column'></div>").append(
                         $("<div class='field'></div>").append(
                             $("<label>Arrival max time</label>"),
-                            $("<input></input>").attr("class", "arrivalMaxTime").attr("type", "time")
-                        )
-                    ),
-                    $("<div class='three wide column'></div>").append(
-                        $("<div class='field'></div>").append(
-                            $("<label>Max total duration</label>"),
-                            $("<input></input>").attr("class", "maxTotalDuration").attr("type", "time")
+                            $("<input class='flightModel'></input>")
+                                .attr("data-property-name", "arrivalMaxTime")
+                                .attr("type", "time")
+                                .attr("value", flightModel == null ? "" : flightModel.arrivalMaxTime)
+                                .change(recomputeModel)
                         )
                     )
-                ).insertBefore($(".row.footer"));
+                ).insertBefore($(".row.addFlightSeparator"));
+
+                recomputeModel();
 
             }
 
             function openWebsites() {
                 for (flightsearchWebsiteProvider in flightsearcherWebsiteProviders) {
-                    if ($("#site-" + flightsearchWebsiteProvider).prop("checked")) {
-                        flightsearcherWebsiteProviders[flightsearchWebsiteProvider].openWebsite();
+                    if (flightSearchModel.activePages.indexOf(flightsearchWebsiteProvider) > -1) {
+                        flightsearcherWebsiteProviders[flightsearchWebsiteProvider].openWebsite(flightSearchModel);
                     }
                 }
             }
 
             $("#addRowButton").click(addFlightRow);
             $("#openWebsitesButton").click(openWebsites);
+            $("input").change(recomputeModel);
+            $("select").change(recomputeModel);
 
-            addFlightRow();
+            let storedFlightSearchModelString = localStorage.getItem("flightSearchModel");
+            let storedFlightSearchModel = storedFlightSearchModelString == null || storedFlightSearchModelString.length <= 0 ? null : JSON.parse(storedFlightSearchModelString);
+
+            $(".query").append(
+                $("<div class='row addFlightSeparator'></div>").append(
+                    $("<div class='four wide column'></div>").append(
+                        $("<button class='ui labeled icon button'></button>")
+                            .append($("<i class='plus square icon'></i>"))
+                            .append($("<span>Add flight</span>"))
+                            .click(addFlightRow)
+                    )
+                ),
+                $("<div class='row'></div>").append(
+                    $("<div class='two wide column'></div>").append(
+                        $("<div class='field'></div>").append(
+                            $("<label>Passengers</label>"),
+                            $("<input class='flightSearchModel' type='number' />")
+                                .attr("data-property-name", "numberOfPassengers")
+                                .val(storedFlightSearchModel.numberOfPassengers == null || storedFlightSearchModel.numberOfPassengers <= 0 ? 1 : storedFlightSearchModel.numberOfPassengers)
+                                .change(recomputeModel)
+                        )
+                    ),
+                    $("<div class='two wide column'></div>").append(
+                        $("<div class='field'></div>").append(
+                            $("<label>Max transfers</label>"),
+                            $("<input class='flightSearchModel' type='number' />")
+                                .attr("data-property-name", "maxTransfers")
+                                .val(storedFlightSearchModel.maxTransfers == null || storedFlightSearchModel.maxTransfers <= 0 ? "" : storedFlightSearchModel.maxTransfers)
+                                .change(recomputeModel)
+                        )
+                    ),
+                    $("<div class='three wide column'></div>").append(
+                        $("<div class='field'></div>").append(
+                            $("<label>Max transfer duration</label>"),
+                            $("<input class='flightSearchModel' type='time' />")
+                                .attr("data-property-name", "maxTransferDuration")
+                                .val(storedFlightSearchModel.maxTransferDuration)
+                                .change(recomputeModel)
+                        )
+                    ),
+                    $("<div class='three wide column'></div>").append(
+                        $("<div class='field'></div>").append(
+                            $("<label>Max total duration</label>"),
+                            $("<input class='flightSearchModel' type='time' />")
+                                .attr("data-property-name", "maxLegDuration")
+                                .val(storedFlightSearchModel.maxLegDuration)
+                                .change(recomputeModel)
+                        )
+                    )
+                )
+            );
+
+            let categoriesRow = $("<div class='row'></div>");
+            let categories = new Array();
+            for (flightsearchWebsiteProvider in flightsearcherWebsiteProviders) {
+                if (categories.indexOf(flightsearcherWebsiteProviders[flightsearchWebsiteProvider].category) < 0) {
+                    categories.push(flightsearcherWebsiteProviders[flightsearchWebsiteProvider].category);
+                }
+            }
+            for (category in categories) {
+                let categoryField = $("<div class='field'></div>").append($("<label></label>").text(categories[category]));
+                for (flightsearchWebsiteProvider in flightsearcherWebsiteProviders) {
+                    if (categories[category] == flightsearcherWebsiteProviders[flightsearchWebsiteProvider].category) {
+                        categoryField.append(
+                            $("<div></div>").append(
+                                $("<div class='ui checkbox'></div>").append(
+                                    $("<input type='checkbox' class='activePageModel' />")
+                                        .attr("data-page-name", flightsearchWebsiteProvider)
+                                        .prop("checked", storedFlightSearchModel == null || storedFlightSearchModel.activePages == null ? false : storedFlightSearchModel.activePages.indexOf(flightsearchWebsiteProvider) > -1)
+                                        .change(recomputeModel)
+                                    ,
+                                    $("<label></label>").text(flightsearcherWebsiteProviders[flightsearchWebsiteProvider].title)
+                                )
+                            )
+                        );
+                    }
+                }
+                categoriesRow.append($("<div class='three wide column'></div>").append(categoryField));
+            }
+            $(".query").append(categoriesRow);
+
+            if (storedFlightSearchModel == null) {
+                addFlightRow(null);
+            } else {
+                if (storedFlightSearchModel.flights == null || storedFlightSearchModel.flights.length < 1) {
+                    addFlightRow(null);
+                } else {
+                    for (let i=0; i < storedFlightSearchModel.flights.length; i++) {
+                        addFlightRow(storedFlightSearchModel.flights[i]);
+                    }
+                }
+            }
 
         </script>
 

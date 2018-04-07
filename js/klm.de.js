@@ -1,5 +1,7 @@
 flightsearcherWebsiteProviders.klm = {
-    openWebsite: function() {
-        alert("KLM!");
+    category: "Airlines",
+    title: "KLM.de",
+    openWebsite: function(flightSearchModel) {
+        alert("KLM not implemented yet!");
     }
 };

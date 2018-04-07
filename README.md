@@ -9,8 +9,6 @@ That's how the flight search central came to life as a simple HTML site that cre
 As usual, the list of things to do has a few items left that I hope to complete step by step:
 
 * Implementations for the following flight search sites:
-  * Kayak
   * Momondo
   * Skyscanner
   * KLM
-* Store entered values in a cookie to load them the next time the page is opened
