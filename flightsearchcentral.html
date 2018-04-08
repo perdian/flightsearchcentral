@@ -216,7 +216,7 @@
                             $("<label>Passengers</label>"),
                             $("<input class='flightSearchModel' type='number' />")
                                 .attr("data-property-name", "numberOfPassengers")
-                                .val(storedFlightSearchModel.numberOfPassengers == null || storedFlightSearchModel.numberOfPassengers <= 0 ? 1 : storedFlightSearchModel.numberOfPassengers)
+                                .val(storedFlightSearchModel == null || storedFlightSearchModel.numberOfPassengers == null || storedFlightSearchModel.numberOfPassengers <= 0 ? 1 : storedFlightSearchModel.numberOfPassengers)
                                 .change(recomputeModel)
                         )
                     ),
@@ -225,7 +225,7 @@
                             $("<label>Max transfers</label>"),
                             $("<input class='flightSearchModel' type='number' />")
                                 .attr("data-property-name", "maxTransfers")
-                                .val(storedFlightSearchModel.maxTransfers == null || storedFlightSearchModel.maxTransfers <= 0 ? "" : storedFlightSearchModel.maxTransfers)
+                                .val(storedFlightSearchModel == null || storedFlightSearchModel.maxTransfers == null || storedFlightSearchModel.maxTransfers <= 0 ? "" : storedFlightSearchModel.maxTransfers)
                                 .change(recomputeModel)
                         )
                     ),
@@ -234,7 +234,7 @@
                             $("<label>Max transfer duration</label>"),
                             $("<input class='flightSearchModel' type='time' />")
                                 .attr("data-property-name", "maxTransferDuration")
-                                .val(storedFlightSearchModel.maxTransferDuration)
+                                .val(storedFlightSearchModel == null ? null : storedFlightSearchModel.maxTransferDuration)
                                 .change(recomputeModel)
                         )
                     ),
@@ -243,7 +243,7 @@
                             $("<label>Max total duration</label>"),
                             $("<input class='flightSearchModel' type='time' />")
                                 .attr("data-property-name", "maxLegDuration")
-                                .val(storedFlightSearchModel.maxLegDuration)
+                                .val(storedFlightSearchModel == null ? null : storedFlightSearchModel.maxLegDuration)
                                 .change(recomputeModel)
                         )
                     )
