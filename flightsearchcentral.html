@@ -241,7 +241,7 @@
                     $("<div class='three wide column'></div>").append(
                         $("<div class='field'></div>").append(
                             $("<label>Max total duration</label>"),
-                            $("<input class='flightSearchModel' type='time' />")
+                            $("<input class='flightSearchModel' />")
                                 .attr("data-property-name", "maxLegDuration")
                                 .val(storedFlightSearchModel == null ? null : storedFlightSearchModel.maxLegDuration)
                                 .change(recomputeModel)

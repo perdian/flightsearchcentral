@@ -37,7 +37,7 @@ flightsearcherWebsiteProviders.kayak = {
         kayakUrl += "?sort=price_a";
         kayakUrl += "&fs=landing=" + fsLanding;
         kayakUrl += ";takeoff=" + fsTakeoff;
-        if (flightSearchModel.maxLegDuration.length > 0) {
+        if (flightSearchModel.maxLegDuration != null && flightSearchModel.maxLegDuration.length > 0) {
             let maxLegMoment = moment(flightSearchModel.maxLegDuration, "HH:mm");
             kayakUrl += ";legdur=" + (maxLegMoment.hours() * 60 + maxLegMoment.minutes());
         }
