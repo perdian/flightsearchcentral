@@ -1,0 +1,143 @@
+<html>
+    <head>
+
+        <title>Flight search central</title>
+        <link rel="stylesheet" type="text/css" class="ui" href="https://semantic-ui.com//dist/semantic.min.css">
+        <meta charset="utf-8" />
+
+        <style type="text/css">
+            body { padding: 2rem 0 2rem 0; }
+            .query .row { margin: 1rem 0 0 0; border-top: 1px dashed #888888; }
+            .query .row .field { padding: 0.25rem 0 0.25rem 0; }
+            .actions { margin: 1rem 0 0 0; padding: 2rem 0 0 0; border-top: 1px dashed #888888; }
+        </style>
+
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+        <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+        <script type="text/javascript" src="https://momentjs.com/downloads/moment.min.js"></script>
+        <script type="text/javascript" src="https://semantic-ui.com/dist/semantic.min.js"></script>
+
+        <script type="text/javascript">
+            let flightsearcherWebsiteProviders = {};
+        </script>
+
+        <script type="text/javascript" src="js/kayak.eu.js"></script>
+        <script type="text/javascript" src="js/momondo.de.js"></script>
+        <script type="text/javascript" src="js/skyscanner.de.js"></script>
+        <script type="text/javascript" src="js/klm.de.js"></script>
+
+    </head>
+    <body>
+
+        <div id="root" class="ui container">
+
+            <header class="ui header">
+                <i class="plane icon"></i>
+                <div class="content">
+                    Search flights
+                    <div class="sub header">Enter query</div>
+                </div>
+            </header>
+
+            <div class="query ui grid form">
+                <template>
+                    <flight v-for="flight in flights" v-on:remove-flight="removeFlight" v-bind:flight="flight" v-bind:key="flight.index">
+                    </flight>
+                </template>
+                <div class="row addFlightSeparator">
+                    <div class="four wide column">
+                        <button class="ui labeled icon button" v-on:click="addFlight"><i class="plus square icon"></i><span>Add flight</span></button>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="two wide column">
+                        <div class="field">
+                            <label>Passengers</label>
+                            <input class="flightSearchModel" v-model="numberOfPassengers" type="number" />
+                        </div>
+                    </div>
+                    <div class="two wide column">
+                        <div class="field">
+                            <label>Max transfers</label>
+                            <input class="flightSearchModel" v-model="maxTransfers" type="number" />
+                        </div>
+                    </div>
+                    <div class="three wide column">
+                        <div class="field">
+                            <label>Max transfer duration</label>
+                            <input class="flightSearchModel" v-model="maxTransferDuration" />
+                        </div>
+                    </div>
+                    <div class="three wide column">
+                        <div class="field">
+                            <label>Max total duration</label>
+                            <input class="flightSearchModel" v-model="maxTotalDuration" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <button class="ui primary button" v-on:click="openWebsites">Open websites</button>
+                </div>
+            </div>
+
+        </div>
+
+        <script type="text/javascript">
+
+            var flightSearchModelString = localStorage.getItem("flightSearchModel");
+            var flightSearchModel = flightSearchModelString == null || flightSearchModelString.length <= 0 ? null : JSON.parse(flightSearchModelString);
+            flightSearchModel.maxTotalDuration = flightSearchModel.maxTotalDuration || "";
+            flightSearchModel.maxTransfers = flightSearchModel.maxTransfers || "";
+            flightSearchModel.maxTransferDuration = flightSearchModel.maxTransferDuration || "";
+            flightSearchModel.store = function() {
+                console.log("Storing flight search model");
+                localStorage.setItem("flightSearchModel", JSON.stringify(flightSearchModel));
+            };
+
+            var vm = new Vue({
+                el: '#root',
+                data: flightSearchModel,
+                methods: {
+                    addFlight: function() {
+                        this.flights.push({
+                            index: this.flights.length
+                        });
+                    },
+                    removeFlight: function(flight) {
+                        if (this.flights.length > 1) {
+                            this.flights.splice(this.flights.indexOf(flight), 1);
+                        }
+                    },
+                    openWebsites: function(event) {
+
+                    }
+                },
+                components: {
+                    flight: {
+                        props: ['flight'],
+                        template: `
+                            <div class="row flight">
+                                <div class="one wide column">
+                                    <div class="field">
+                                        <label>&nbsp;</label>
+                                        <button class="ui icon button" v-on:click="$emit('remove-flight', flight)"><i class="window close icon"></i></button>
+                                    </div>
+                                </div>
+                                <div class="three wide column">
+                                    <div class="field">
+                                        <label>Departure airport</label>
+                                        <input class="flightModel" v-model="flight.departureAirport" placeholder="XXX" value="" type="text" />
+                                    </div>
+                                </div>
+                            </div>
+                        `
+                    }
+                }
+            })
+            vm.$watch('$data', function (newVal, oldVal) { flightSearchModel.store(); }, { deep: true });
+
+
+        </script>
+
+    </body>
+</html>
