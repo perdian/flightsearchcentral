@@ -3,6 +3,7 @@
 
         <title>Flight search central</title>
         <link rel="stylesheet" type="text/css" class="ui" href="https://semantic-ui.com//dist/semantic.min.css">
+        <meta charset="utf-8" />
 
         <style type="text/css">
             body { padding: 2rem 0 2rem 0; }
@@ -11,12 +12,13 @@
             .actions { margin: 1rem 0 0 0; padding: 2rem 0 0 0; border-top: 1px dashed #888888; }
         </style>
 
-        <script type="text/javascript" src="https://semantic-ui.com/dist/semantic.min.js"></script>
+        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
         <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
         <script type="text/javascript" src="https://momentjs.com/downloads/moment.min.js"></script>
+        <script type="text/javascript" src="https://semantic-ui.com/dist/semantic.min.js"></script>
 
         <script type="text/javascript">
-            let flightsearcherWebsiteProviders = {};
+            var flightSearchWebsiteProviders = new Array();
         </script>
 
         <script type="text/javascript" src="js/kayak.eu.js"></script>
@@ -27,7 +29,7 @@
     </head>
     <body>
 
-        <div class="ui container">
+        <div id="root" class="ui container">
 
             <header class="ui header">
                 <i class="plane icon"></i>
@@ -38,11 +40,54 @@
             </header>
 
             <div class="query ui grid form">
-            </div>
-
-            <div class="actions ui grid">
+                <template>
+                    <flight v-for="flight in inputModel.flights" v-on:remove-flight="removeFlight" v-bind:flight="flight" v-bind:key="flight.index">
+                    </flight>
+                </template>
+                <div class="row addFlightSeparator">
+                    <div class="four wide column">
+                        <button class="ui labeled icon button" v-on:click="addFlight"><i class="plus square icon"></i><span>Add flight</span></button>
+                    </div>
+                </div>
                 <div class="row">
-                    <button id="openWebsitesButton" class="ui primary button">Open websites</button>
+                    <div class="two wide column">
+                        <div class="field">
+                            <label>Passengers</label>
+                            <input class="flightSearchModel" v-model="inputModel.numberOfPassengers" type="number" />
+                        </div>
+                    </div>
+                    <div class="two wide column">
+                        <div class="field">
+                            <label>Max transfers</label>
+                            <input class="flightSearchModel" v-model="inputModel.maxTransfers" type="number" />
+                        </div>
+                    </div>
+                    <div class="three wide column">
+                        <div class="field">
+                            <label>Max transfer duration</label>
+                            <input class="flightSearchModel" v-model="inputModel.maxTransferDuration" />
+                        </div>
+                    </div>
+                    <div class="three wide column">
+                        <div class="field">
+                            <label>Max total duration</label>
+                            <input class="flightSearchModel" v-model="inputModel.maxTotalDuration" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="three wide column" v-for="providerCategory in providerCategories">
+                        <div class="field">
+                            <label>{{ providerCategory.name }}</label>
+                        </div>
+                        <div class="ui checkbox" v-for="provider in providerCategory.providers">
+                            <input type="checkbox" class="activePageModel" v-bind:value="provider.title" v-model="inputModel.providersSelected" />
+                            <label>{{ provider.title }}</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <button class="ui primary button" v-on:click="openWebsites">Open websites</button>
                 </div>
             </div>
 
@@ -50,246 +95,124 @@
 
         <script type="text/javascript">
 
-            let index = 0;
-            let flightSearchModel = null;
-
-            function recomputeModel() {
-
-                flightSearchModel = {
-                    flights: new Array(),
-                    activePages: new Array()
-                };
-
-                let flightSearchModelProperties = $(".flightSearchModel");
-                for (let i=0; i < flightSearchModelProperties.length; i++) {
-                    let flightSearchModelPropertyElement = $(flightSearchModelProperties[i]);
-                    if (flightSearchModelPropertyElement.val().length > 0) {
-                        flightSearchModel[flightSearchModelPropertyElement.attr("data-property-name")] = flightSearchModelPropertyElement.val();
-                    }
-                }
-                let flightRows = $(".flight");
-                for (let i=0; i < flightRows.length; i++) {
-                    let flightRow = $(flightRows[i]);
-                    let flightModel = {};
-                    let inputFields = flightRow.find(".flightModel");
-                    for (let j=0; j < inputFields.length; j++) {
-                        let inputField = $(inputFields[j]);
-                        flightModel[inputField.attr('data-property-name')] = inputField.val();
-                    }
-                    flightSearchModel.flights.push(flightModel);
-                }
-                let pageCheckboxes = $(".activePageModel");
-                for (let i=0; i < pageCheckboxes.length; i++) {
-                    let pageCheckbox = $(pageCheckboxes[i]);
-                    if (pageCheckbox.prop("checked")) {
-                        flightSearchModel.activePages.push(pageCheckbox.attr("data-page-name"));
-                    }
-                }
-
+            var flightSearchModelString = localStorage.getItem("flightSearchModel");
+            var flightSearchModel = flightSearchModelString == null || flightSearchModelString.length <= 0 ? null : JSON.parse(flightSearchModelString);
+            flightSearchModel.maxTotalDuration = flightSearchModel.maxTotalDuration || "";
+            flightSearchModel.maxTransfers = flightSearchModel.maxTransfers || "";
+            flightSearchModel.maxTransferDuration = flightSearchModel.maxTransferDuration || "";
+            flightSearchModel.providersSelected = flightSearchModel.providersSelected || new Array();
+            flightSearchModel.store = function() {
+                console.log("Storing flight search model");
                 localStorage.setItem("flightSearchModel", JSON.stringify(flightSearchModel));
+            };
 
+            var providerCategoriesByName = new Object();
+            var providerCategories = new Array();
+            for (var i=0; i < flightSearchWebsiteProviders.length; i++) {
+                var providerCategoryName = flightSearchWebsiteProviders[i].category;
+                var providerCategory = providerCategoriesByName[providerCategoryName];
+                if (providerCategory == null) {
+                    providerCategory = new Object();
+                    providerCategory.name = providerCategoryName;
+                    providerCategory.providers = new Array();
+                    providerCategoriesByName[providerCategoryName] = providerCategory;
+                    providerCategories.push(providerCategory);
+                }
+                providerCategory.providers.push(flightSearchWebsiteProviders[i]);
             }
 
-            function closeRow(rowId) {
-                $("#" + rowId).remove();
-                recomputeModel();
-            }
-
-            function addFlightRow(flightModel) {
-
-                let rowId = "row" + index++;
-                $("<div class='row flight'></div>").attr("id", rowId).append(
-                    $("<div class='one wide column'></div>").append(
-                        $("<div class='field'></div>").append(
-                            $("<label>&nbsp;</label>"),
-                            $("<button class='ui icon button'><i class='window close icon'></i></button>").click(function() { closeRow(rowId); })
-                        )
-                    ),
-                    $("<div class='three wide column'></div>").append(
-                        $("<div class='field'></div>").append(
-                            $("<label>Departure airport</label>"),
-                            $("<input class='flightModel'></input>")
-                                .attr("data-property-name", "departureAirport")
-                                .attr("placeholder", "XXX")
-                                .attr("type", "text")
-                                .attr("value", flightModel == null ? "" : flightModel.departureAirport)
-                                .change(recomputeModel)
-                        )
-                    ),
-                    $("<div class='three wide column'></div>").append(
-                        $("<div class='field'></div>").append(
-                            $("<label>Arrival airport</label>"),
-                            $("<input class='flightModel'></input>")
-                                .attr("data-property-name", "arrivalAirport")
-                                .attr("placeholder", "XXX")
-                                .attr("type", "text")
-                                .attr("value", flightModel == null ? "" : flightModel.arrivalAirport)
-                                .change(recomputeModel)
-                        )
-                    ),
-                    $("<div class='three wide column'></div>").append(
-                        $("<div class='field'></div>").append(
-                            $("<label>Date</label>"),
-                            $("<input class='flightModel'></input>")
-                                .attr("data-property-name", "date")
-                                .attr("type", "date")
-                                .change(recomputeModel)
-                                .attr("value", flightModel == null ? "" : flightModel.date)
-                        )
-                    ),
-                    $("<div class='six wide column'>&nbsp;</div>"),
-                    $("<div class='one wide column'>&nbsp;</div>"),
-                    $("<div class='three wide column'></div>").append(
-                        $("<div class='field'></div>").append(
-                            $("<label>Depature min time</label>"),
-                            $("<input class='flightModel'></input>")
-                                .attr("data-property-name", "departureMinTime")
-                                .attr("type", "time")
-                                .attr("value", flightModel == null ? "" : flightModel.departureMinTime)
-                                .change(recomputeModel)
-                        )
-                    ),
-                    $("<div class='three wide column'></div>").append(
-                        $("<div class='field'></div>").append(
-                            $("<label>Depature max time</label>"),
-                            $("<input class='flightModel'></input>")
-                                .attr("data-property-name", "departureMaxTime")
-                                .attr("type", "time")
-                                .attr("value", flightModel == null ? "" : flightModel.departureMaxTime)
-                                .change(recomputeModel)
-                        )
-                    ),
-                    $("<div class='three wide column'></div>").append(
-                        $("<div class='field'></div>").append(
-                            $("<label>Arrival min time</label>"),
-                            $("<input class='flightModel'></input>")
-                                .attr("data-property-name", "arrivalMinTime")
-                                .attr("type", "time")
-                                .attr("value", flightModel == null ? "" : flightModel.arrivalMinTime)
-                                .change(recomputeModel)
-                        )
-                    ),
-                    $("<div class='three wide column'></div>").append(
-                        $("<div class='field'></div>").append(
-                            $("<label>Arrival max time</label>"),
-                            $("<input class='flightModel'></input>")
-                                .attr("data-property-name", "arrivalMaxTime")
-                                .attr("type", "time")
-                                .attr("value", flightModel == null ? "" : flightModel.arrivalMaxTime)
-                                .change(recomputeModel)
-                        )
-                    )
-                ).insertBefore($(".row.addFlightSeparator"));
-
-                recomputeModel();
-
-            }
-
-            function openWebsites() {
-                for (flightsearchWebsiteProvider in flightsearcherWebsiteProviders) {
-                    if (flightSearchModel.activePages.indexOf(flightsearchWebsiteProvider) > -1) {
-                        flightsearcherWebsiteProviders[flightsearchWebsiteProvider].openWebsite(flightSearchModel);
+            var vm = new Vue({
+                el: '#root',
+                data: {
+                    inputModel: flightSearchModel,
+                    providerCategories: providerCategories
+                },
+                methods: {
+                    addFlight: function() {
+                        this.inputModel.flights.push({
+                            index: this.inputModel.flights.length
+                        });
+                    },
+                    removeFlight: function(flight) {
+                        if (this.inputModel.flights.length > 1) {
+                            this.inputModel.flights.splice(this.inputModel.flights.indexOf(flight), 1);
+                        }
+                    },
+                    openWebsites: function(event) {
+                        for (var i=0; i < flightSearchWebsiteProviders.length; i++) {
+                            if (this.inputModel.providersSelected.indexOf(flightSearchWebsiteProviders[i].title) > -1) {
+                                flightSearchWebsiteProviders[i].openWebsite(flightSearchModel);
+                            }
+                        }
+                    }
+                },
+                components: {
+                    flight: {
+                        props: ['flight'],
+                        template: `
+                            <div class="row flight">
+                                <div class="one wide column">
+                                    <div class="field">
+                                        <label>&nbsp;</label>
+                                        <button class="ui icon button" v-on:click="$emit('remove-flight', flight)"><i class="window close icon"></i></button>
+                                    </div>
+                                </div>
+                                <div class="three wide column">
+                                    <div class="field">
+                                        <label>Departure date</label>
+                                        <input class="flightModel" v-model="flight.departureDate" type="date" />
+                                    </div>
+                                </div>
+                                <div class="three wide column">
+                                    <div class="field">
+                                        <label>Departure airport</label>
+                                        <input class="flightModel" v-model="flight.departureAirport" placeholder="XXX" type="text" />
+                                    </div>
+                                </div>
+                                <div class="three wide column">
+                                    <div class="field">
+                                        <label>Arrival date</label>
+                                        <input class="flightModel" v-model="flight.arrivalDate" type="date" />
+                                    </div>
+                                </div>
+                                <div class="three wide column">
+                                    <div class="field">
+                                        <label>Arrival airport</label>
+                                        <input class="flightModel" v-model="flight.arrivalAirport" placeholder="XXX" type="text" />
+                                    </div>
+                                </div>
+                                <div class="three wide column">&nbsp;</div>
+                                <div class="one wide column">&nbsp;</div>
+                                <div class="three wide column">
+                                    <div class="field">
+                                        <label>Departure min time</label>
+                                        <input class="flightModel" v-model="flight.departureMinTime" type="time" />
+                                    </div>
+                                </div>
+                                <div class="three wide column">
+                                    <div class="field">
+                                        <label>Departure max time</label>
+                                        <input class="flightModel" v-model="flight.departureMaxTime" type="time" />
+                                    </div>
+                                </div>
+                                <div class="three wide column">
+                                    <div class="field">
+                                        <label>Arrival min time</label>
+                                        <input class="flightModel" v-model="flight.arrivalMinTime" type="time" />
+                                    </div>
+                                </div>
+                                <div class="three wide column">
+                                    <div class="field">
+                                        <label>Arrival max time</label>
+                                        <input class="flightModel" v-model="flight.arrivalMaxTime" type="time" />
+                                    </div>
+                                </div>
+                            </div>
+                        `
                     }
                 }
-            }
-
-            $("#addRowButton").click(addFlightRow);
-            $("#openWebsitesButton").click(openWebsites);
-            $("input").change(recomputeModel);
-            $("select").change(recomputeModel);
-
-            let storedFlightSearchModelString = localStorage.getItem("flightSearchModel");
-            let storedFlightSearchModel = storedFlightSearchModelString == null || storedFlightSearchModelString.length <= 0 ? null : JSON.parse(storedFlightSearchModelString);
-
-            $(".query").append(
-                $("<div class='row addFlightSeparator'></div>").append(
-                    $("<div class='four wide column'></div>").append(
-                        $("<button class='ui labeled icon button'></button>")
-                            .append($("<i class='plus square icon'></i>"))
-                            .append($("<span>Add flight</span>"))
-                            .click(addFlightRow)
-                    )
-                ),
-                $("<div class='row'></div>").append(
-                    $("<div class='two wide column'></div>").append(
-                        $("<div class='field'></div>").append(
-                            $("<label>Passengers</label>"),
-                            $("<input class='flightSearchModel' type='number' />")
-                                .attr("data-property-name", "numberOfPassengers")
-                                .val(storedFlightSearchModel == null || storedFlightSearchModel.numberOfPassengers == null || storedFlightSearchModel.numberOfPassengers <= 0 ? 1 : storedFlightSearchModel.numberOfPassengers)
-                                .change(recomputeModel)
-                        )
-                    ),
-                    $("<div class='two wide column'></div>").append(
-                        $("<div class='field'></div>").append(
-                            $("<label>Max transfers</label>"),
-                            $("<input class='flightSearchModel' type='number' />")
-                                .attr("data-property-name", "maxTransfers")
-                                .val(storedFlightSearchModel == null || storedFlightSearchModel.maxTransfers == null || storedFlightSearchModel.maxTransfers <= 0 ? "" : storedFlightSearchModel.maxTransfers)
-                                .change(recomputeModel)
-                        )
-                    ),
-                    $("<div class='three wide column'></div>").append(
-                        $("<div class='field'></div>").append(
-                            $("<label>Max transfer duration</label>"),
-                            $("<input class='flightSearchModel' type='time' />")
-                                .attr("data-property-name", "maxTransferDuration")
-                                .val(storedFlightSearchModel == null ? null : storedFlightSearchModel.maxTransferDuration)
-                                .change(recomputeModel)
-                        )
-                    ),
-                    $("<div class='three wide column'></div>").append(
-                        $("<div class='field'></div>").append(
-                            $("<label>Max total duration</label>"),
-                            $("<input class='flightSearchModel' />")
-                                .attr("data-property-name", "maxLegDuration")
-                                .val(storedFlightSearchModel == null ? null : storedFlightSearchModel.maxLegDuration)
-                                .change(recomputeModel)
-                        )
-                    )
-                )
-            );
-
-            let categoriesRow = $("<div class='row'></div>");
-            let categories = new Array();
-            for (flightsearchWebsiteProvider in flightsearcherWebsiteProviders) {
-                if (categories.indexOf(flightsearcherWebsiteProviders[flightsearchWebsiteProvider].category) < 0) {
-                    categories.push(flightsearcherWebsiteProviders[flightsearchWebsiteProvider].category);
-                }
-            }
-            for (category in categories) {
-                let categoryField = $("<div class='field'></div>").append($("<label></label>").text(categories[category]));
-                for (flightsearchWebsiteProvider in flightsearcherWebsiteProviders) {
-                    if (categories[category] == flightsearcherWebsiteProviders[flightsearchWebsiteProvider].category) {
-                        categoryField.append(
-                            $("<div></div>").append(
-                                $("<div class='ui checkbox'></div>").append(
-                                    $("<input type='checkbox' class='activePageModel' />")
-                                        .attr("data-page-name", flightsearchWebsiteProvider)
-                                        .prop("checked", storedFlightSearchModel == null || storedFlightSearchModel.activePages == null ? false : storedFlightSearchModel.activePages.indexOf(flightsearchWebsiteProvider) > -1)
-                                        .change(recomputeModel)
-                                    ,
-                                    $("<label></label>").text(flightsearcherWebsiteProviders[flightsearchWebsiteProvider].title)
-                                )
-                            )
-                        );
-                    }
-                }
-                categoriesRow.append($("<div class='three wide column'></div>").append(categoryField));
-            }
-            $(".query").append(categoriesRow);
-
-            if (storedFlightSearchModel == null) {
-                addFlightRow(null);
-            } else {
-                if (storedFlightSearchModel.flights == null || storedFlightSearchModel.flights.length < 1) {
-                    addFlightRow(null);
-                } else {
-                    for (let i=0; i < storedFlightSearchModel.flights.length; i++) {
-                        addFlightRow(storedFlightSearchModel.flights[i]);
-                    }
-                }
-            }
+            })
+            vm.$watch('$data', function (newVal, oldVal) { flightSearchModel.store(); }, { deep: true });
 
         </script>
 
