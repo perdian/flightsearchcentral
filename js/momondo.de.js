@@ -1,4 +1,4 @@
-flightsearcherWebsiteProviders.momondo = {
+flightSearchWebsiteProviders.push({
     category: "Metasearchers",
     title: "Momondo.de",
     openWebsite: function(flightSearchModel) {
@@ -10,7 +10,7 @@ flightsearcherWebsiteProviders.momondo = {
         for (let i=0; i < flightSearchModel.flights.length; i++) {
             momondoUrl += "&SO" + i + "=" + flightSearchModel.flights[i].departureAirport;
             momondoUrl += "&SD" + i + "=" + flightSearchModel.flights[i].arrivalAirport;
-            momondoUrl += "&SDP" + i + "=" + moment(flightSearchModel.flights[i].date, "YYYY-MM-DD").format("DD-MM-YYYY");
+            momondoUrl += "&SDP" + i + "=" + moment(flightSearchModel.flights[i].departureDate, "YYYY-MM-DD").format("DD-MM-YYYY");
         }
         momondoUrl += "&AD=" + (flightSearchModel.numberOfPassengers == null ? 1 : flightSearchModel.numberOfPassengers);
         momondoUrl += "&DO=false";
@@ -20,4 +20,4 @@ flightsearcherWebsiteProviders.momondo = {
         window.open(momondoUrl, "_blank");
 
     }
-};
+});

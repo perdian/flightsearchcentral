@@ -1,16 +1,17 @@
-flightsearcherWebsiteProviders.kayak = {
+flightSearchWebsiteProviders.push ({
     category: "Metasearchers",
     title: "Kayak.eu",
     openWebsite: function(flightSearchModel) {
         let airports = "";
         let fsLanding = "";
         let fsTakeoff = "";
+
         for (let i=0; i < flightSearchModel.flights.length; i++) {
 
             let flight = flightSearchModel.flights[i];
             airports += "/" + flight.departureAirport;
             airports += "-" + flight.arrivalAirport;
-            airports += "/" + flight.date;
+            airports += "/" + flight.departureDate;
 
             fsTakeoff += (i > 0 ? "|" : "");
             if (flight.departureMinTime != null && flight.departureMinTime.length > 0) {
@@ -50,4 +51,4 @@ flightsearcherWebsiteProviders.kayak = {
         window.open(kayakUrl, "_blank");
 
     }
-};
+});

@@ -1,4 +1,4 @@
-flightsearcherWebsiteProviders.klm = {
+flightSearchWebsiteProviders.push({
     category: "Airlines",
     title: "KLM.de",
     openWebsite: function(flightSearchModel) {
@@ -10,11 +10,11 @@ flightsearcherWebsiteProviders.klm = {
         for (let i=0; i < flightSearchModel.flights.length; i++) {
             klmUrl += (i > 0 ? "-" : "");
             klmUrl += flightSearchModel.flights[i].departureAirport + ":A:";
-            klmUrl += moment(flightSearchModel.flights[i].date, "YYYY-MM-DD").format("YYYYMMDD");
+            klmUrl += moment(flightSearchModel.flights[i].departureDate, "YYYY-MM-DD").format("YYYYMMDD");
             klmUrl += "%3E" + flightSearchModel.flights[i].arrivalAirport + ":A";
         }
 
         window.open(klmUrl, "_blank");
 
     }
-};
+});
